@@ -3,6 +3,7 @@ import * as THREE from '../../vendor/three.module.min.js';
 import { buildBrickObject } from './scene.js';
 import { PH } from './geom.js';
 import { PART_MAP } from './catalog.js';
+import { RoomEnvironment } from '../../vendor/RoomEnvironment.js';
 
 let R = null, S = null, C = null;
 const cache = new Map();
@@ -14,7 +15,10 @@ function setup() {
   R.outputColorSpace = THREE.SRGBColorSpace;
   R.toneMapping = THREE.ACESFilmicToneMapping;
   S = new THREE.Scene();
-  S.add(new THREE.HemisphereLight('#ffffff', '#8d94a0', 1.5));
+  const pm = new THREE.PMREMGenerator(R);
+  S.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+  S.environmentIntensity = 0.55;
+  S.add(new THREE.HemisphereLight('#ffffff', '#8d94a0', 1.0));
   const d = new THREE.DirectionalLight('#ffffff', 2.0); d.position.set(4, 8, 6); S.add(d);
   C = new THREE.PerspectiveCamera(30, 1, 0.1, 500);
 }

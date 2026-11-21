@@ -63,12 +63,16 @@ export class Builder {
     g.rotateX(rx); g.rotateY(ry); g.translate(x, y, z);
     return this.add(g, mat);
   }
-  stud(x, y, z, mat, r = STUD_R, h = STUD_H) {
-    return this.cyl(r, r, h, x, y, z, 18, mat);
+  stud(x, y, z, mat, r = STUD_R, h = STUD_H, seg = 18) {
+    const g = new THREE.CylinderGeometry(r, r, h, seg, 1, true);   // ohne Boden (unsichtbar)
+    g.translate(x, y + h / 2, z); this.add(g, mat);
+    const top = new THREE.CircleGeometry(r, seg); top.rotateX(-Math.PI / 2); top.translate(x, y + h, z);
+    return this.add(top, mat);
   }
   studs(w, d, y, mat, ox = 0, oz = 0) {
+    const seg = w * d > 100 ? 8 : w * d > 32 ? 12 : 16;
     for (let i = 0; i < w; i++) for (let j = 0; j < d; j++)
-      this.stud(-w / 2 + 0.5 + i + ox, y, -d / 2 + 0.5 + j + oz, mat);
+      this.stud(-w / 2 + 0.5 + i + ox, y, -d / 2 + 0.5 + j + oz, mat, STUD_R, STUD_H, seg);
     return this;
   }
   // Profil (u = Z, v = Y) entlang X extrudieren, zentriert

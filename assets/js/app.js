@@ -82,6 +82,7 @@ function loadProjectIntoApp(project, bricks) {
   setLevel(Infinity);
   model.reset(bricks);
   $('#project-name').value = state.project.name;
+  updatePlateInfo();
   scene.setView(bricks.length ? 'fit' : 'iso', false);
   if (bricks.length) scene.setView('iso', false);
   setSaveState('saved');
@@ -690,6 +691,9 @@ function closePopover() { const p = $('.popover'); if (p) { document.removeEvent
 
 function fileItems() {
   return [
+    { icon: 'plus', label: 'Neues Modell …', onclick: newModel },
+    { icon: 'top', label: 'Grundplatte ändern …', onclick: openPlateDialog },
+    '-',
     { icon: 'download', label: 'Als Datei speichern', key: '', onclick: exportFile },
     { icon: 'upload', label: 'Datei öffnen …', key: 'Strg+O', onclick: importFile },
     '-',
@@ -705,6 +709,7 @@ function openMainMenu(anchor) {
     '-', ...fileItems(), '-',
     { icon: 'book', label: 'Bauanleitung', onclick: startInstructions },
     { icon: 'list', label: 'Stückliste ansehen', onclick: openPartsList },
+    { icon: 'top', label: 'Grundplatte ändern', onclick: openPlateDialog },
     { icon: 'gear', label: 'Einstellungen', onclick: openSettings },
     { icon: 'help', label: 'Hilfe', onclick: openHelp },
   ]);
@@ -766,10 +771,22 @@ function promptBox(title, value = '') {
 
 function newModel() {
   saveNow();
-  const p = Store.newProject('Neues Modell', settings.plate);
-  Store.saveProject(p, [], null);
-  loadProjectIntoApp(p, []);
-  setTimeout(() => { $('#project-name').focus(); $('#project-name').select(); }, 50);
+  let size = settings.plate || 32;
+  const b = h('div', { class: 'plates-pick' });
+  const inp = h('input', { class: 'field', value: 'Neues Modell', maxlength: 60, 'aria-label': 'Name' });
+  b.append(h('label', { class: 'flabel' }, 'Name'), inp, h('span', { class: 'flabel' }, 'Grundplatte'));
+  const grid = h('div', { class: 'sizegrid' });
+  for (const [s, n] of PLATE_SIZES) grid.append(h('button', { class: 'sizebtn' + (s === size ? ' on' : ''), type: 'button', 'data-s': s, onclick: e => { size = s; $$('.sizebtn', grid).forEach(x => x.classList.toggle('on', +x.dataset.s === s)); } }, `<i style="--s:${Math.round(14 + s / 128 * 34)}px"></i><b>${s} × ${s}</b><small>${n}</small>`));
+  b.append(grid);
+  const create = () => {
+    const p = Store.newProject(inp.value.trim() || 'Neues Modell', size);
+    settings.plate = size; Store.saveSettings(settings);
+    Store.saveProject(p, [], null);
+    loadProjectIntoApp(p, []);
+  };
+  const m = modal('Neues Modell', b, { actions: [{ label: 'Abbrechen' }, { label: 'Anlegen', kind: 'primary', onclick: create }] });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { create(); m.close(); } });
+  setTimeout(() => { inp.focus(); inp.select(); }, 30);
 }
 
 // --- Vorlagen ------------------------------------------------------------------
@@ -781,7 +798,7 @@ function openTemplates() {
     const card = h('div', { class: 'card' });
     card.innerHTML = `<button class="cimg" type="button" aria-label="${esc(t.name)} laden"><img alt=""></button><div class="cinfo"><b>${esc(t.name)}</b><small>${bricks.length} Teile</small></div>`;
     $('.cimg', card).addEventListener('click', () => {
-      const p = Store.newProject(t.name, 32);
+      const p = Store.newProject(t.name, t.plate || 32);
       Store.saveProject(p, bricks, null);
       loadProjectIntoApp(p, bricks); saveThumb();
       m.close(); toast(`Vorlage „${t.name}" als neues Modell geöffnet.`);
@@ -812,7 +829,7 @@ function importFile() {
         const data = Store.parseFile(rd.result);
         const name = data.name === 'Importiertes Modell' ? f.name.replace(/\.(baukasten\.)?json$/i, '') : data.name;
         let plate = data.plate || 32;
-        for (const s of [32, 48, 64, 96]) { const test = new Model(); test.plate = s; if (s >= plate && test.inBounds(data.bricks)) { plate = s; break; } }
+        for (const s of [32, 48, 64, 96, 128]) { const test = new Model(); test.plate = s; if (s >= plate && test.inBounds(data.bricks)) { plate = s; break; } }
         const p = Store.newProject(name, plate);
         Store.saveProject(p, data.bricks, null);
         loadProjectIntoApp(p, data.bricks); saveThumb();
@@ -852,12 +869,41 @@ function openPartsList() {
   modal('Stückliste', body, { wide: true, actions: [{ label: 'Als CSV speichern', onclick: exportCSV }, { label: 'Drucken', kind: 'primary', onclick: () => { document.body.classList.add('print-bom'); window.print(); document.body.classList.remove('print-bom'); return false; } }] });
 }
 
+function setPlate(s) {
+  model.plate = s; state.project.plate = s; scene.buildPlate(s, settings.plateColor); saveSoon(0);
+  updatePlateInfo();
+  if (state.lastHover) hover(state.lastHover);
+}
+function updatePlateInfo() {
+  const el = $('#plate-info'); if (!el) return;
+  el.innerHTML = `<span>Grundplatte <b>${model.plate} × ${model.plate}</b></span>`;
+  const b = h('button', { class: 'linkbtn', type: 'button', onclick: openPlateDialog }, 'Größe ändern');
+  el.append(b);
+}
+function openPlateDialog() {
+  const b = h('div', { class: 'plates-pick' });
+  const m = modal('Grundplatte', b);
+  const render = () => {
+    b.innerHTML = '<p class="muted small">Größere Flächen für ganze Landschaften. Dein Modell bleibt in der Mitte.</p>';
+    const grid = h('div', { class: 'sizegrid' });
+    for (const [s, n] of PLATE_SIZES) {
+      const test = new Model(); test.plate = s;
+      const fits = test.inBounds(model.bricks);
+      grid.append(h('button', { class: 'sizebtn' + (s === model.plate ? ' on' : ''), type: 'button', disabled: !fits, title: fits ? '' : 'Dein Modell ist dafür zu groß', onclick: () => { setPlate(s); m.close(); toast(`Grundplatte jetzt ${s} × ${s}`); } },
+        `<i style="--s:${Math.round(14 + s / 128 * 34)}px"></i><b>${s} × ${s}</b><small>${n}</small>`));
+    }
+    b.append(grid);
+  };
+  render();
+}
+
 // --- Einstellungen & Hilfe ---------------------------------------------------------
+const PLATE_SIZES = [[16, 'Mini'], [24, 'Klein'], [32, 'Standard'], [48, 'Groß'], [64, 'Burg'], [96, 'Landschaft'], [128, 'Riesig']];
 const PLATE_COLORS = [['#d6dbe1', 'Hellgrau'], ['#5fae55', 'Grün'], ['#f2f2ee', 'Weiß'], ['#4f8fd6', 'Blau'], ['#d9c49a', 'Sand'], ['#4a4f57', 'Dunkel']];
 function openSettings() {
   const b = h('div', { class: 'settings' });
   b.innerHTML = `
-    <div class="row"><label for="s-plate">Grundplatte dieses Modells</label><select id="s-plate" class="field">${[16, 24, 32, 48, 64].map(s => `<option value="${s}" ${s === model.plate ? 'selected' : ''}>${s} × ${s}</option>`).join('')}</select></div>
+    <div class="row"><label for="s-plate">Grundplatte dieses Modells</label><select id="s-plate" class="field">${PLATE_SIZES.map(([s, n]) => `<option value="${s}" ${s === model.plate ? 'selected' : ''}>${s} × ${s} · ${n}</option>`).join('')}</select></div>
     <div class="row"><span>Farbe der Grundplatte</span><div class="swatches" id="s-pc">${PLATE_COLORS.map(([c, n]) => `<button type="button" class="sw ${c === settings.plateColor ? 'on' : ''}" style="--c:${c}" data-c="${c}" title="${n}" aria-label="${n}"></button>`).join('')}</div></div>
     <div class="row"><label for="s-shadow">Schatten</label><input type="checkbox" class="switch" id="s-shadow" ${settings.shadows ? 'checked' : ''}></div>
     <div class="row"><label for="s-edges">Kanten betonen</label><input type="checkbox" class="switch" id="s-edges" ${settings.edges ? 'checked' : ''}></div>
@@ -868,15 +914,14 @@ function openSettings() {
   $('#s-plate', b).addEventListener('change', e => {
     const s = +e.target.value, test = new Model(); test.plate = s;
     if (!test.inBounds(model.bricks)) { toast('Dein Modell ragt über diese Größe hinaus.'); e.target.value = model.plate; return; }
-    model.plate = s; state.project.plate = s; scene.buildPlate(s, settings.plateColor); saveSoon(0);
-    if (state.lastHover) hover(state.lastHover);
+    setPlate(s);
   });
   $$('#s-pc .sw', b).forEach(sw => sw.addEventListener('click', () => {
     settings.plateColor = sw.dataset.c; Store.saveSettings(settings); scene.buildPlate(model.plate, settings.plateColor);
     $$('#s-pc .sw', b).forEach(x => x.classList.toggle('on', x === sw));
   }));
   $('#s-shadow', b).addEventListener('change', e => { settings.shadows = e.target.checked; Store.saveSettings(settings); scene.setShadows(settings.shadows); });
-  $('#s-edges', b).addEventListener('change', e => { settings.edges = e.target.checked; Store.saveSettings(settings); renderOptions.edges = settings.edges; scene.rebuild(); });
+  $('#s-edges', b).addEventListener('change', e => { settings.edges = e.target.checked; Store.saveSettings(settings); renderOptions.edges = settings.edges; scene.refreshAll(); });
   $('#s-sound', b).addEventListener('change', e => { settings.sound = e.target.checked; Store.saveSettings(settings); });
   $('#s-intro', b).addEventListener('click', () => { m.close(); showOnboarding(); });
 }

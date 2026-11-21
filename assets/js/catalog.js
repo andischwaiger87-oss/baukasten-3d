@@ -1,5 +1,6 @@
 // Teile-Katalog, Farben und Materialien von Baukasten 3D
 import { Builder, PH, GAP, shape, THREE } from './geom.js';
+import { registerExtra } from './parts-extra.js';
 
 // ---------------------------------------------------------------------------
 // Farben
@@ -83,6 +84,12 @@ export const FIXED = {
   flame: { hex: '#ff8a1f', glow: 1.4 },
   solar: { hex: '#1e3a7a', metalness: 0.5, roughness: 0.25 },
   engine: { hex: '#ff7a1a', glow: 1.3 },
+  skin: { hex: '#e8b98f', roughness: 0.6 },
+  magic: { hex: '#6ee7ff', glow: 1.4 },
+  beam: { hex: '#5b3a22', roughness: 0.8 },
+  roof: { hex: '#8e2f2a', roughness: 0.6 },
+  water: { hex: '#3d8fe0', opacity: 0.6, roughness: 0.1 },
+  rose: { hex: '#f6b9cf' },
 };
 
 // ---------------------------------------------------------------------------
@@ -96,11 +103,13 @@ export const CATEGORIES = [
   { id: 'round', name: 'Rund & Bögen' },
   { id: 'build', name: 'Fenster & Türen' },
   { id: 'vehicle', name: 'Fahrzeug' },
-  { id: 'nature', name: 'Natur' },
-  { id: 'city', name: 'Stadt' },
+  { id: 'nature', name: 'Natur & Landschaft' },
   { id: 'castle', name: 'Burg' },
+  { id: 'village', name: 'Dorf & Markt' },
+  { id: 'knights', name: 'Ritter & Wesen' },
+  { id: 'city', name: 'Stadt' },
   { id: 'space', name: 'Raumfahrt' },
-  { id: 'figure', name: 'Figuren' },
+  { id: 'figure', name: 'Figurenteile' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -745,6 +754,8 @@ def('horn11', 'Horn', 'figure', [1, 1, 5], horn, { suggest: 'gold' });
 def('wing13', 'Federflügel 1×3', 'figure', [1, 3, 4], featherWing);
 def('fin12', 'Flosse 1×2', 'figure', [1, 2, 4], fin);
 def('tail14', 'Schwanz 1×4', 'figure', [1, 4, 4], tail);
+
+registerExtra(def, { brick, slope, tile });
 
 export const PARTS = P;
 export const PART_MAP = new Map(P.map(p => [p.id, p]));

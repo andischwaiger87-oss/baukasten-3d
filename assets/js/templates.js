@@ -63,7 +63,7 @@ function house() {
 
 function car() {
   const { list, put } = kit();
-  put('axle42', 'dark_grey', 0, 0, -2.5); put('axle42', 'dark_grey', 0, 0, 2.5);
+  put('axle42', 'dark_grey', 0, 0, -3); put('axle42', 'dark_grey', 0, 0, 3);
   put('p48', 'dark_grey', 0, 5, 0);
   const C = 'red';
   put('b23', C, -1, 6, 1.5); put('b23', C, 1, 6, 1.5);
@@ -147,7 +147,97 @@ function lighthouse() {
   return list;
 }
 
+function knightsCastle() {
+  const { list, put } = kit();
+  const G = 'green', S = 'light_grey', D = 'dark_grey';
+  for (const x of [-16, 16]) for (const z of [-16, 16]) put('p3232', G, x, 0, z);
+  // Ecktürme rund
+  for (const [x, z] of [[-10, -14], [10, -14], [-10, 2], [10, 2]]) {
+    for (const y of [1, 10, 19]) put('tower_r44', S, x, y, z);
+    put('roof44', 'blue', x, 28, z);
+    put('flag11', 'red', x + 0.5, 33, z + 0.5);
+  }
+  // Rückmauer
+  for (const x of [-6, -2, 2, 6]) { put('wall14h', S, x, 1, -13.5, 2); put('wall14', S, x, 13, -13.5, 2); }
+  for (let x = -7; x <= 7; x += 2) put('crenel12', D, x, 19, -13.5, 2);
+  // Seitenmauern
+  for (const sx of [-9.5, 9.5]) {
+    for (const z of [-10, -6, -2]) { put('wall14h', S, sx, 1, z); put('wall14', S, sx, 13, z); }
+    for (let z = -11; z <= -1; z += 2) put('crenel12', D, sx, 19, z);
+  }
+  // Vordermauer mit Tor
+  put('gate18', S, 0, 1, 1.5, 2);
+  put('b14', S, -2, 16, 1.5, 2); put('b14', S, 2, 16, 1.5, 2);
+  for (const x of [-6, 6]) { put('wall14h', S, x, 1, 1.5, 2); put('wall14', S, x, 13, 1.5, 2); }
+  for (let x = -7; x <= 7; x += 2) put('crenel12', D, x, 19, 1.5, 2);
+  put('banner12', 'blue', -3, 7, 2.5, 2); put('banner12', 'blue', 3, 7, 2.5, 2);
+  // Bergfried
+  for (const y of [1, 10, 19, 28]) put('tower_s44', S, 0, y, -8);
+  put('roof44', 'dark_red', 0, 37, -8);
+  put('flag11', 'yellow', 0.5, 42, -7.5);
+  // Burghof
+  put('well33', S, -4.5, 1, -3.5);
+  put('fig_king', 'dark_red', 3.5, 1, -3.5);
+  put('fig_lady', 'pink', 4.5, 1, -3.5);
+  put('fig_knight', 'blue', 2.5, 1, -1.5); put('fig_knight', 'blue', 3.5, 1, -1.5);
+  put('knight_horse', 'blue', 6, 1, -8);
+  put('torch11', 'brown', -4.5, 1, 0.5); put('torch11', 'brown', 4.5, 1, 0.5);
+  put('barrel11', 'brown', -7.5, 1, -11.5); put('barrel11', 'brown', -6.5, 1, -11.5); put('crate11', 'tan', -7.5, 4, -11.5);
+  put('fig_guard', 'red', -2.5, 1, -1.5); put('fig_archer', 'dark_green', -3.5, 1, -0.5);
+  // Graben und Zugbrücke
+  for (const x of [-14, -10, -6]) put('p24', 'trans_blue', x, 1, 5, 2);
+  for (const x of [6, 10, 14]) put('p24', 'trans_blue', x, 1, 5, 2);
+  put('p22', 'trans_blue', -3, 1, 5); put('p22', 'trans_blue', 3, 1, 5);
+  put('bridge46', 'brown', 0, 1, 5);
+  // Weg ins Dorf
+  for (let z = 10; z <= 30; z += 4) put('cobble44', S, 0, 1, z);
+  // Drachenhort
+  put('dragon68', 'dark_green', 20, 1, -18);
+  put('fire14', 'orange', 19.5, 11, -12);
+  put('rock44', D, 26, 1, -24); put('rock44', D, 25, 1, -12); put('rock22', D, 16, 1, -24);
+  put('chest12', 'brown', 16.5, 1, -11); put('fig_wizard', 'purple', 13.5, 1, -17.5);
+  put('fig_knight', 'red', 15.5, 1, -8.5);
+  // Dorf
+  put('tent44', 'blue', -20, 1, 14); put('tent44', 'red', -14, 1, 18);
+  put('fire22', 'brown', -17, 1, 11);
+  put('fig_archer', 'dark_green', -18.5, 1, 9.5); put('fig_villager', 'brown', -15.5, 1, 10.5);
+  put('stall34', 'red', 12.5, 1, 14); put('stall34', 'blue', 17.5, 1, 14);
+  put('fig_villager', 'tan', 12.5, 1, 17.5); put('fig_lady', 'purple', 17.5, 1, 17.5);
+  put('cart24', 'brown', 22, 1, 20);
+  put('hay22', 'yellow', 25, 1, 16); put('hay22', 'yellow', 25, 4, 16);
+  put('barrel11', 'brown', 9.5, 1, 18.5); put('barrel11', 'brown', 10.5, 1, 18.5); put('crate11', 'tan', 9.5, 4, 18.5);
+  put('horse24', 'brown', 6, 1, 24);
+  for (const [x, z] of [[-6.5, 22], [-4.5, 25], [-8.5, 26]]) put('sheep12', 'white', x, 1, z);
+  put('chicken11', 'white', 8.5, 1, 27.5); put('chicken11', 'white', 9.5, 1, 28.5); put('pig12', 'rose', 11.5, 1, 26);
+  for (let z = 20; z <= 28; z += 4) put('fence14', 'brown', -10.5, 1, z);
+  // Natur
+  put('tree_oak', 'green', -24, 1, -20); put('tree_oak', 'dark_green', -26, 1, 0);
+  put('tree_pine', 'dark_green', -20, 1, -26); put('tree_pine', 'dark_green', 28, 1, 4); put('tree_pine', 'dark_green', -29, 1, 24);
+  put('tree_leaf', 'green', -16, 1, 26); put('tree_birch', 'lime', 27.5, 1, 28.5);
+  put('bush22', 'green', -12, 1, -18); put('bush22', 'dark_green', 14, 1, 2);
+  put('hill46', 'green', -24, 1, 27, 4); put('hill44', 'green', 26, 1, 8, 6);
+  for (const [x, z] of [[-3.5, 12.5], [3.5, 16.5], [-2.5, 20.5], [2.5, 26.5]]) put('flower11', 'yellow', x, 1, z);
+  put('mushroom11', 'red', -21.5, 1, -16.5); put('stump22', 'brown', -22, 1, -6);
+  put('water44', 'trans_blue', 22, 1, -2); put('lily44', 'green', 26, 1, -2); put('reeds11', 'lime', 19.5, 1, -0.5);
+  return list;
+}
+
+function dragonLair() {
+  const { list, put } = kit();
+  put('p1616', 'dark_grey', 0, 0, 0);
+  put('rock44', 'dark_grey', -5, 1, -5); put('rock44', 'light_grey', 5, 1, -5); put('rock22', 'dark_grey', -6, 1, 1);
+  put('dragon68', 'red', 0, 1, -2);
+  put('fire14', 'orange', -0.5, 11, 4);
+  put('chest12', 'brown', -3.5, 1, 3); put('crystal11', 'trans_blue', -4.5, 1, 4.5); put('crystal11', 'trans_ruby', 4.5, 1, 4.5);
+  put('fig_knight', 'blue', 1.5, 1, 6.5); put('fig_wizard', 'purple', -1.5, 1, 6.5);
+  put('brazier11', 'dark_grey', -6.5, 1, 6.5); put('brazier11', 'dark_grey', 6.5, 1, 6.5);
+  put('mushroom11', 'red', 6.5, 1, 0.5);
+  return list;
+}
+
 export const TEMPLATES = [
+  { id: 'castle', name: 'Ritterburg mit Dorf', build: knightsCastle, plate: 64 },
+  { id: 'lair', name: 'Drachenhort', build: dragonLair },
   { id: 'house', name: 'Haus mit Garten', build: house },
   { id: 'car', name: 'Sportwagen', build: car },
   { id: 'park', name: 'Stadtpark', build: park },

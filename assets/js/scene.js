@@ -1,6 +1,7 @@
 // 3D-Szene: Rendering, Kamera, Grundplatte, Steine, Vorschau, Hervorhebung
 import * as THREE from '../../vendor/three.module.min.js';
 import { OrbitControls } from '../../vendor/OrbitControls.js';
+import { RoomEnvironment } from '../../vendor/RoomEnvironment.js';
 import { partGeometry, colorInfo, FIXED, partHeight } from './catalog.js';
 import { PH } from './geom.js';
 import { aabb } from './model.js';
@@ -81,8 +82,11 @@ export class Scene3D {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#e9ecf1');
+    const pm = new THREE.PMREMGenerator(r);
+    this.scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environmentIntensity = 0.55;
 
-    this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 600);
+    this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 1600);
     this.controls = new OrbitControls(this.camera, r.domElement);
     Object.assign(this.controls, { enableDamping: true, dampingFactor: 0.12, maxPolarAngle: Math.PI / 2 - 0.03, minDistance: 4, maxDistance: 160, screenSpacePanning: true });
     this.controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
@@ -90,7 +94,7 @@ export class Scene3D {
     this.controls.addEventListener('change', () => { this.dirty = true; });
 
     // Licht
-    this.scene.add(new THREE.HemisphereLight('#ffffff', '#9aa1ad', 1.25));
+    this.scene.add(new THREE.HemisphereLight('#ffffff', '#9aa1ad', 0.8));
     const sun = this.sun = new THREE.DirectionalLight('#ffffff', 2.1);
     sun.position.set(18, 34, 22);
     sun.castShadow = true;
@@ -116,6 +120,7 @@ export class Scene3D {
     const loop = (t) => {
       requestAnimationFrame(loop);
       const moved = this.controls.update();
+      if (moved || this.dirty) this.followShadow();
       if (this.animations.length) { this.stepAnimations(t); this.dirty = true; }
       if (moved || this.dirty) { this.renderer.render(this.scene, this.camera); this.dirty = false; }
     };
@@ -132,26 +137,60 @@ export class Scene3D {
   }
 
   buildPlate(size, colorHex) {
-    if (this.plateGroup) { this.scene.remove(this.plateGroup); this.plateGroup.traverse(o => o.geometry?.dispose()); }
+    if (this.plateGroup) { this.scene.remove(this.plateGroup); this.plateGroup.traverse(o => { o.geometry?.dispose(); if (o.material?.map) o.material.map.dispose(); }); }
     const g = this.plateGroup = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(colorHex), roughness: 0.6 });
     const base = new THREE.Mesh(new THREE.BoxGeometry(size, 0.3, size), mat);
     base.position.y = -0.15; base.receiveShadow = true; g.add(base);
-    const studGeo = new THREE.CylinderGeometry(0.29, 0.29, 0.14, 14); studGeo.translate(0, 0.07, 0);
-    const inst = new THREE.InstancedMesh(studGeo, mat, size * size);
-    const m = new THREE.Matrix4(); let i = 0;
-    for (let x = 0; x < size; x++) for (let z = 0; z < size; z++) { m.makeTranslation(-size / 2 + 0.5 + x, 0, -size / 2 + 0.5 + z); inst.setMatrixAt(i++, m); }
-    inst.receiveShadow = true; inst.castShadow = false;
-    g.add(inst);
-    // Großflächiger Schattenboden
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: 0.12 }));
+    if (size <= 64) {
+      const seg = size <= 32 ? 14 : 10;
+      const studGeo = new THREE.CylinderGeometry(0.29, 0.29, 0.14, seg, 1, true); studGeo.translate(0, 0.07, 0);
+      const cap = new THREE.CircleGeometry(0.29, seg); cap.rotateX(-Math.PI / 2); cap.translate(0, 0.14, 0);
+      for (const geo of [studGeo, cap]) {
+        const inst = new THREE.InstancedMesh(geo, mat, size * size);
+        const m = new THREE.Matrix4(); let i = 0;
+        for (let x = 0; x < size; x++) for (let z = 0; z < size; z++) { m.makeTranslation(-size / 2 + 0.5 + x, 0, -size / 2 + 0.5 + z); inst.setMatrixAt(i++, m); }
+        inst.receiveShadow = true; g.add(inst);
+      }
+    } else {
+      // Große Flächen: Noppen als Textur, damit es flüssig bleibt
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x = c.getContext('2d');
+      x.fillStyle = '#d9d9d9'; x.fillRect(0, 0, 64, 64);
+      x.strokeStyle = 'rgba(0,0,0,0.10)'; x.lineWidth = 1; x.strokeRect(0.5, 0.5, 63, 63);
+      const grd = x.createRadialGradient(27, 26, 3, 32, 32, 20);
+      grd.addColorStop(0, '#ffffff'); grd.addColorStop(0.7, '#efefef'); grd.addColorStop(1, '#c4c4c4');
+      x.fillStyle = 'rgba(0,0,0,0.28)'; x.beginPath(); x.arc(35, 36, 19, 0, Math.PI * 2); x.fill();
+      x.fillStyle = grd; x.beginPath(); x.arc(32, 32, 18.5, 0, Math.PI * 2); x.fill();
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(size, size); tex.anisotropy = 8;
+      const top = new THREE.Mesh(new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: new THREE.Color(colorHex), map: tex, roughness: 0.6 }));
+      top.position.y = 0.002; top.receiveShadow = true; g.add(top);
+    }
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: 0.12 }));
     floor.position.y = -0.3; floor.receiveShadow = true; g.add(floor);
     this.scene.add(g);
-    const s = this.sun.shadow.camera, half = size * 0.75 + 6;
-    Object.assign(s, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 140 });
-    s.updateProjectionMatrix();
     this.plateSize = size;
+    this.controls.maxDistance = Math.max(160, size * 2.6);
+    this.shadowHalf = Math.min(size * 0.75 + 6, 46);
+    const sc = this.sun.shadow.camera;
+    Object.assign(sc, { left: -this.shadowHalf, right: this.shadowHalf, top: this.shadowHalf, bottom: -this.shadowHalf, near: 1, far: 260 });
+    sc.updateProjectionMatrix();
+    this.shadowKey = null; this.followShadow();
     this.dirty = true;
+  }
+
+  // Schattenbereich wandert mit dem Blickpunkt – scharfe Schatten auch auf großen Flächen
+  followShadow() {
+    const t = this.controls.target, half = this.plateSize / 2, sh = this.shadowHalf || 30;
+    const cx = Math.round(Math.max(-half + sh * 0.6, Math.min(half - sh * 0.6, t.x)) / 4) * 4;
+    const cz = Math.round(Math.max(-half + sh * 0.6, Math.min(half - sh * 0.6, t.z)) / 4) * 4;
+    const key = cx + ',' + cz;
+    if (key === this.shadowKey) return;
+    this.shadowKey = key;
+    this.sun.position.set(cx + 36, 68, cz + 44);
+    this.sun.target.position.set(cx, 0, cz);
+    this.sun.target.updateMatrixWorld();
   }
 
   setShadows(on) {
@@ -204,15 +243,19 @@ export class Scene3D {
     const groups = new Map();
     for (const b of visible) { const k = b.t + '|' + b.c; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
     this.buckets ??= new Map();
-    for (const [k, bk] of this.buckets) if (!groups.has(k)) { for (const m of bk.meshes) { this.world.remove(m); m.dispose(); } this.buckets.delete(k); }
+    const drop = bk => { for (const m of bk.meshes) { this.world.remove(m); m.dispose(); } if (bk.edges) { this.world.remove(bk.edges); bk.edges.geometry.dispose(); } };
+    for (const [k, bk] of this.buckets) if (!groups.has(k)) { drop(bk); this.buckets.delete(k); }
+    const edgesOn = renderOptions.edges && visible.length <= 12000;
     const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1), UP = new THREE.Vector3(0, 1, 0);
     for (const [k, list] of groups) {
       let bk = this.buckets.get(k);
+      // unverändert? dann nichts tun
+      if (bk && bk.list && bk.list.length === list.length && bk.edgesOn === edgesOn && list.every((b, i) => b === bk.list[i])) continue;
       if (!bk || bk.cap < list.length) {
-        if (bk) for (const m of bk.meshes) { this.world.remove(m); m.dispose(); }
+        if (bk) drop(bk);
         const [t, c] = k.split('|');
         const cap = Math.max(8, 1 << Math.ceil(Math.log2(list.length)));
-        bk = { cap, ids: [], meshes: [] };
+        bk = { cap, ids: [], meshes: [], t, c };
         for (const { mat, geo } of partGeometry(t)) {
           const material = materialFor(mat, c, false);
           const im = new THREE.InstancedMesh(geo, material, cap);
@@ -222,29 +265,24 @@ export class Scene3D {
         }
         this.buckets.set(k, bk);
       }
-      bk.ids = list.map(b => b.id);
+      bk.list = list; bk.ids = list.map(b => b.id); bk.edgesOn = edgesOn;
       list.forEach((b, i) => {
         P.set(b.x, b.y * PH, b.z); Q.setFromAxisAngle(UP, b.r * Math.PI / 4); M.compose(P, Q, S);
         for (const m of bk.meshes) m.setMatrixAt(i, M);
       });
       for (const m of bk.meshes) { m.count = list.length; m.instanceMatrix.needsUpdate = true; m.computeBoundingSphere(); m.computeBoundingBox?.(); }
+      this.bucketEdges(bk, list, edgesOn);
     }
-    this.rebuildEdges(visible);
     this.dirty = true;
   }
 
-  rebuildEdges(visible) {
-    if (this.edgeLines) { this.world.remove(this.edgeLines); this.edgeLines.geometry.dispose(); this.edgeLines = null; }
-    if (!renderOptions.edges || !visible.length || visible.length > 2500) return;
-    let total = 0;
-    const items = [];
-    for (const b of visible) {
-      if (colorInfo(b.c).opacity < 1) continue;
-      const eg = edgesFor(b.t); if (!eg) continue;
-      items.push([b, eg.attributes.position.array]); total += eg.attributes.position.array.length;
-    }
-    const out = new Float32Array(total); let o = 0;
-    for (const [b, arr] of items) {
+  bucketEdges(bk, list, on) {
+    if (bk.edges) { this.world.remove(bk.edges); bk.edges.geometry.dispose(); bk.edges = null; }
+    if (!on || colorInfo(bk.c).opacity < 1) return;
+    const eg = edgesFor(bk.t); if (!eg) return;
+    const arr = eg.attributes.position.array;
+    const out = new Float32Array(arr.length * list.length); let o = 0;
+    for (const b of list) {
       const a = b.r * Math.PI / 4, cs = Math.cos(a), sn = Math.sin(a), ty = b.y * PH;
       for (let i = 0; i < arr.length; i += 3) {
         const x = arr[i], y = arr[i + 1], z = arr[i + 2];
@@ -252,10 +290,12 @@ export class Scene3D {
       }
     }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(out, 3));
-    this.edgeLines = new THREE.LineSegments(geo, edgeMat);
-    this.edgeLines.raycast = () => {};
-    this.world.add(this.edgeLines);
+    bk.edges = new THREE.LineSegments(geo, edgeMat); bk.edges.raycast = () => {};
+    this.world.add(bk.edges);
   }
+
+  // Kanten an/aus: alles neu aufbauen
+  refreshAll() { if (this.buckets) for (const bk of this.buckets.values()) bk.list = null; this.rebuild(); }
 
   modelBox() {
     const list = this.visibleBricks || [];
