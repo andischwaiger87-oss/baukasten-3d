@@ -2,6 +2,20 @@
 
 Prompts für Titelbild und Werbegrafiken. Prompts auf Englisch, weil Bildmodelle (ChatGPT/GPT-Image, Gemini/Imagen, Midjourney, Firefly) damit verlässlicher arbeiten.
 
+## Fertige Grafiken (`docs/grafiken/`)
+
+| Datei | Format | Einsatz |
+|---|---|---|
+| `cover1-galerie.webp` | 1920 × 1080 | Titelbild App-Galerie (ohne Text, Galerie setzt Titel selbst) – identisch mit `docs/baukasten-3d.webp` |
+| `cover2-galerie.webp` | 1920 × 1080 | Alternative Titelbild, Nahansicht Burgtor |
+| `cover1-mit-text.png` | 1920 × 1080 | Website, Präsentation, LinkedIn-Beitrag quer |
+| `cover2-mit-text.png` | 1920 × 1080 | Variante zu cover1 |
+| `quadrat-arbeitsplatz.png` | 1254 × 1254 | Instagram/Facebook Feed |
+| `hochformat-ritter.png` | 1086 × 1448 | Instagram 4:5, Ankündigung Ritter-Erweiterung |
+| `og-image.png` | 1200 × 630 | Link-Vorschau, in der App bereits eingebunden |
+
+Grundlage: KI-Hintergründe aus den Prompts unten, Bildschirme mit echten Screenshots perspektivisch befüllt, Schrift DM Sans.
+
 ## So arbeiten
 
 1. **Echte Screenshots verwenden.** Bildmodelle erfinden Oberflächen – Texte und Knöpfe werden dabei unleserlich oder falsch. Darum erzeugt die KI nur Szene, Licht und Geräte mit **leerem Bildschirm** (oder bekommt den Screenshot als Referenzbild). Den echten Screenshot setzt du danach in Figma, Canva oder Photopea ein.

@@ -489,7 +489,7 @@ function sign(B, w, d, H) {
 
 // --- Burg -------------------------------------------------------------------
 function flag(B, w, d, H) {
-  B.body(w, PH, d, 0, 0, 0, 'iron');
+  B.cyl(0.28, 0.32, PH, 0, 0, 0, 16, 'iron');
   B.cyl(0.06, 0.06, H - PH - 0.1, 0, PH, 0, 8, 'rim');
   B.sphere(0.1, 0, H - 0.1, 0, 'gold', 1, 1, 1, 10);
   const s = new THREE.Shape();

@@ -278,3 +278,14 @@ select.field { width: auto; min-width: 140px; }
   body.print-bom .modal::backdrop { background: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Niedrige Fenster (Tablet quer, kleine Laptops) ---------- */
+@media (max-height: 880px) and (min-width: 900px) {
+  .credit { display: none; }
+  .colors { gap: 8px; padding: 12px; }
+  .swatches { gap: 5px; grid-template-columns: repeat(auto-fill, minmax(26px, 1fr)); }
+  .glabel { margin-bottom: 5px; }
+  .current-wrap { padding: 10px 12px; }
+  .cur img, .cur-ico { width: 44px; height: 44px; }
+}
+.plate-info { flex-wrap: wrap; }

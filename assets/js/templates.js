@@ -155,7 +155,7 @@ function knightsCastle() {
   for (const [x, z] of [[-10, -14], [10, -14], [-10, 2], [10, 2]]) {
     for (const y of [1, 10, 19]) put('tower_r44', S, x, y, z);
     put('roof44', 'blue', x, 28, z);
-    put('flag11', 'red', x + 0.5, 33, z + 0.5);
+    put('flag11', 'red', x + 0.5, 31, z + 0.5);
   }
   // Rückmauer
   for (const x of [-6, -2, 2, 6]) { put('wall14h', S, x, 1, -13.5, 2); put('wall14', S, x, 13, -13.5, 2); }
@@ -174,7 +174,7 @@ function knightsCastle() {
   // Bergfried
   for (const y of [1, 10, 19, 28]) put('tower_s44', S, 0, y, -8);
   put('roof44', 'dark_red', 0, 37, -8);
-  put('flag11', 'yellow', 0.5, 42, -7.5);
+  put('flag11', 'yellow', 0.5, 40, -7.5);
   // Burghof
   put('well33', S, -4.5, 1, -3.5);
   put('fig_king', 'dark_red', 3.5, 1, -3.5);
