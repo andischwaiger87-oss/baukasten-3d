@@ -13,7 +13,7 @@ Modelle aus Klemmbausteinen direkt im Browser bauen. Ein Projekt von [mosaik](ht
 - Drehen in 90°- und 45°-Schritten, Kopieren und Einfügen ganzer Gruppen
 - Rückgängig / Wiederholen (300 Schritte)
 - Mehrere Modelle mit Vorschaubild, automatisch im Browser gespeichert
-- Acht Vorlagen (u. a. Ritterburg mit Dorf auf 64 × 64), Bauanleitung Schritt für Schritt, Stückliste (Ansicht, CSV, Druck)
+- Elf Vorlagen, darunter vier fertige Burgen (Ritterburg mit Dorf auf 64 × 64, Wasserburg, Märchenschloss, Palisadenfort), Bauanleitung Schritt für Schritt, Stückliste (Ansicht, CSV, Druck)
 - Export als Datei (JSON) und Bild (PNG); Import auch von Dateien der Vorgängerversion
 - Ebenen-Regler zum Ausblenden oberer Lagen
 - Touch-Bedienung mit Bottom-Sheets am Smartphone

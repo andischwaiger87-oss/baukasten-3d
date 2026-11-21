@@ -13,6 +13,9 @@ Prompts für Titelbild und Werbegrafiken. Prompts auf Englisch, weil Bildmodelle
 | `quadrat-arbeitsplatz.png` | 1254 × 1254 | Instagram/Facebook Feed |
 | `hochformat-ritter.png` | 1086 × 1448 | Instagram 4:5, Ankündigung Ritter-Erweiterung |
 | `og-image.png` | 1200 × 630 | Link-Vorschau, in der App bereits eingebunden |
+| `baukasten-3d-titelbild-hd.webp` | 2560 × 1440 | **Aktives Titelbild** der Detailseite (Feld `app_hero_id`), doppelte Auflösung |
+| `baukasten-3d-kachel.webp` | 1400 × 1400 | **Aktives Beitragsbild** = Kachel in der Übersicht (quadratisch) |
+| `baukasten-3d-einblick-hd.webp` | 2560 × 1440 | Bild unter „Einblicke" auf der Detailseite |
 
 Grundlage: KI-Hintergründe aus den Prompts unten, Bildschirme mit echten Screenshots perspektivisch befüllt, Schrift DM Sans.
 
