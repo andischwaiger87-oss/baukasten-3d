@@ -50,7 +50,16 @@ function init() {
   if (!settings.onboarded) showOnboarding();
   window.addEventListener('beforeunload', () => saveNow());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {});
+    // Neue Version übernommen: einmal neu laden (Modell ist bereits gespeichert)
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      reloaded = true; saveNow(); location.reload();
+    });
+  }
 }
 
 function openInitialProject() {
